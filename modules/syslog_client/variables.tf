@@ -21,3 +21,7 @@ variable "load_balancer_ip" {
 variable "tags" {
   type = map(string)
 }
+
+variable "vpc_cidr_block" {
+  type = string
+}

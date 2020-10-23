@@ -23,7 +23,6 @@ resource "aws_instance" "syslog_client" {
   instance_type          = "t2.small"
   vpc_security_group_ids = list(aws_security_group.syslog_client.id)
   subnet_id              = var.subnet
-  key_name               = aws_key_pair.syslog_client_keypair.key_name
   associate_public_ip_address = true
   iam_instance_profile = aws_iam_instance_profile.syslog_client.name
 
@@ -37,13 +36,14 @@ resource "aws_instance" "syslog_client" {
 yum -y update
 yum install python3 awslogs -y
 
-sudo systemctl start awslogsd
+systemctl start awslogsd
+
 mkdir ~/syslog_client
-echo '${data.template_file.syslog_client.rendered}' >> ~/syslog_client/syslog_client.py
+#echo '${data.template_file.syslog_client.rendered}' >> ~/syslog_client/syslog_client.py
 cd ~/syslog_client
 
 while true; do
-  python -c "import syslog_client; s = syslog_client.Syslog(); s.send({"host": "Staff-Device-Syslog-Host", "ident": "1", "message": "Hello Syslog", "pri": "134"}, syslog_client.Level.WARNING);"
+  python -c "import syslog_client; s = syslog_client.Syslog(); s.send({\"host\": \"Staff-Device-Syslog-Host\", \"ident\": \"1\", \"message\": \"Hello Syslog\", \"pri\": \"134\"}, syslog_client.Level.WARNING);"
   sleep 1
   echo "hi"
 done
@@ -51,20 +51,13 @@ EOF
 }
 
 resource "aws_security_group" "syslog_client" {
-  name = "${var.prefix}-syslog-endpoint-load-test-security-group"
+  name = "${var.prefix}-syslog-client-instance-security-group"
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 514
+    to_port     = 514
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr_block]
   }
 
   vpc_id = var.syslog_endpoint_vpc

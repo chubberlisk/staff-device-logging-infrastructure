@@ -297,6 +297,7 @@ module "syslog_load_test" {
   subnet              = module.syslog_receiver_vpc.public_subnets[0]
   load_balancer_ip    = var.syslog_load_balancer_private_ip_eu_west_2a
   tags                = module.label.tags
+  vpc_cidr_block      = var.syslog_receiver_cidr_block
 
   prefix = module.label.id
 
